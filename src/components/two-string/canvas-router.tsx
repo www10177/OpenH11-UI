@@ -72,7 +72,7 @@ export const CanvasRouter = () => {
   const theme = useAppSelector(getSelectedTheme);
   const accentColor = useMemo(() => theme[KeyColorType.Accent].c, [theme]);
   const showLoader =
-    path === '/' && (!selectedDefinition || loadProgress !== 1);
+    ['/', '/configure'].includes(path) && (!selectedDefinition || loadProgress !== 1);
   const versionDefinitions: DefinitionVersionMap[] = useMemo(
     () =>
       localDefinitions.filter(
@@ -82,7 +82,7 @@ export const CanvasRouter = () => {
   );
   const hideDesignScene = '/design' === path && !versionDefinitions.length;
   const hideConfigureScene =
-    '/' === path &&
+    ['/', '/configure'].includes(path) &&
     (!selectedDefinition || (loadProgress + progress / 100) / 2 !== 1);
   const terrainOnClick = useCallback(() => {
     if (true) {
@@ -162,10 +162,10 @@ const getRouteX = (route: string) => {
     case '/test': {
       return testPosition;
     }
-    case '/openh11': {
+    case '/': {
       return openh11Position;
     }
-    case '/': {
+    case '/configure': {
       return configurePosition;
     }
     default: {

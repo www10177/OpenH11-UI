@@ -1,17 +1,17 @@
-import {createSelector, createSlice, PayloadAction} from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type {
   MacroEditorSettings,
   Settings,
   TestKeyboardSoundsSettings,
 } from '../types/types';
-import type {PropertiesOfType} from '../types/generic-types';
-import {getSettings, setSettings} from '../utils/device-store';
-import type {RootState} from '.';
-import {THEMES} from 'src/utils/themes';
-import {makeSRGBTheme} from 'src/utils/keyboard-rendering';
-import {updateCSSVariables} from 'src/utils/color-math';
-import {webGLIsAvailable} from 'src/utils/test-webgl';
-import {DefinitionVersion} from '@the-via/reader';
+import type { PropertiesOfType } from '../types/generic-types';
+import { getSettings, setSettings } from '../utils/device-store';
+import type { RootState } from '.';
+import { THEMES } from 'src/utils/themes';
+import { makeSRGBTheme } from 'src/utils/keyboard-rendering';
+import { updateCSSVariables } from 'src/utils/color-math';
+import { webGLIsAvailable } from 'src/utils/test-webgl';
+import { DefinitionVersion } from '@the-via/reader';
 
 // TODO: why are these settings mixed? Is it because we only want some of them cached? SHould we rename to "CachedSettings"?
 type SettingsState = Settings & {
@@ -29,9 +29,11 @@ const initialState: SettingsState = {
 
 const toggleBool = (
   state: SettingsState,
-  key: keyof PropertiesOfType<SettingsState, boolean>,
+  key: keyof Settings,
 ) => {
-  state[key] = !state[key];
+  if (typeof state[key] === 'boolean') {
+    (state as any)[key] = !state[key];
+  }
   setSettings(state);
 };
 
@@ -107,6 +109,21 @@ const settingsSlice = createSlice({
     enableGlobalHotKeys: (state) => {
       state.allowGlobalHotKeys = true;
     },
+    updateLayerName: (
+      state,
+      action: PayloadAction<{
+        devicePath: string;
+        layer: number;
+        name: string;
+      }>,
+    ) => {
+      if (!state.layerNames) state.layerNames = {};
+      if (!state.layerNames[action.payload.devicePath]) {
+        state.layerNames[action.payload.devicePath] = {};
+      }
+      state.layerNames[action.payload.devicePath][action.payload.layer] = action.payload.name;
+      setSettings(state);
+    },
   },
 });
 
@@ -123,12 +140,14 @@ export const {
   updateRenderMode,
   updateThemeName,
   updateDesignDefinitionVersion,
+  updateLayerName,
 } = settingsSlice.actions;
 
 export default settingsSlice.reducer;
 
 export const getDesignDefinitionVersion = (state: RootState) =>
   state.settings.designDefinitionVersion;
+export const getLayerNames = (state: RootState) => state.settings.layerNames || {};
 export const getAllowGlobalHotKeys = (state: RootState) =>
   state.settings.allowGlobalHotKeys;
 export const getDisableFastRemap = (state: RootState) =>

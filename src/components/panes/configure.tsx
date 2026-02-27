@@ -214,7 +214,7 @@ export const ConfigurePane = () => {
   );
 };
 
-const ConfigureGrid = () => {
+export const ConfigurePanels = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
 
@@ -231,6 +231,33 @@ const ConfigureGrid = () => {
     }
   }, [selectedTitle]);
 
+  return (
+    <Grid style={{ pointerEvents: 'none' }}>
+      <MenuCell style={{ pointerEvents: 'all' }}>
+        <MenuContainer>
+          {(KeyboardRows || []).map(
+            ({ Icon, Title }: { Icon: any; Title: string }, idx: number) => (
+              <Row
+                key={idx}
+                onClick={(_) => setRow(idx)}
+                $selected={selectedRow === idx}
+              >
+                <IconContainer>
+                  <Icon />
+                  <MenuTooltip>{t(Title)}</MenuTooltip>
+                </IconContainer>
+              </Row>
+            ),
+          )}
+        </MenuContainer>
+      </MenuCell>
+      {SelectedPane && <SelectedPane />}
+    </Grid>
+  );
+};
+
+export const ConfigureGrid = () => {
+  const dispatch = useDispatch();
   return (
     <>
       <ConfigureFlexCell
@@ -251,28 +278,7 @@ const ConfigureGrid = () => {
           <Badge />
         </div>
       </ConfigureFlexCell>
-      <Grid style={{ pointerEvents: 'none' }}>
-        <MenuCell style={{ pointerEvents: 'all' }}>
-          <MenuContainer>
-            {(KeyboardRows || []).map(
-              ({ Icon, Title }: { Icon: any; Title: string }, idx: number) => (
-                <Row
-                  key={idx}
-                  onClick={(_) => setRow(idx)}
-                  $selected={selectedRow === idx}
-                >
-                  <IconContainer>
-                    <Icon />
-                    <MenuTooltip>{t(Title)}</MenuTooltip>
-                  </IconContainer>
-                </Row>
-              ),
-            )}
-          </MenuContainer>
-        </MenuCell>
-
-        {SelectedPane && <SelectedPane />}
-      </Grid>
+      <ConfigurePanels />
     </>
   );
 };

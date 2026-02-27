@@ -2,9 +2,7 @@
   "name": "OpenH11",
   "vendorId": "0xD010",
   "productId": "0x2202",
-  "keycodes": [
-    "qmk_lighting"
-  ],
+  "lighting": "none",
   "matrix": {
     "rows": 3,
     "cols": 10

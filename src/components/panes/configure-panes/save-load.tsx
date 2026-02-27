@@ -1,14 +1,14 @@
-import {FC, useState} from 'react';
+import { FC, useState } from 'react';
 import styled from 'styled-components';
 import stringify from 'json-stringify-pretty-compact';
-import {ErrorMessage, SuccessMessage} from '../../styled';
-import {AccentUploadButton} from '../../inputs/accent-upload-button';
-import {AccentButton} from '../../inputs/accent-button';
-import {getByteForCode, getCodeForByte} from '../../../utils/key';
+import { ErrorMessage, SuccessMessage } from '../../styled';
+import { AccentUploadButton } from '../../inputs/accent-upload-button';
+import { AccentButton } from '../../inputs/accent-button';
+import { getByteForCode, getCodeForByte } from '../../../utils/key';
 import deprecatedKeycodes from '../../../utils/key-to-byte/deprecated-keycodes';
-import {title, component} from '../../icons/save';
-import {CenterPane} from '../pane';
-import {Detail, Label, ControlRow, SpanOverflowCell} from '../grid';
+import { title, component } from '../../icons/save';
+import { CenterPane } from '../pane';
+import { Detail, Label, ControlRow, SpanOverflowCell } from '../grid';
 import {
   getBasicKeyToByte,
   getSelectedDefinition,
@@ -17,13 +17,13 @@ import {
   getSelectedRawLayers,
   saveRawKeymapToDevice,
 } from 'src/store/keymapSlice';
-import {useAppDispatch, useAppSelector} from 'src/store/hooks';
+import { useAppDispatch, useAppSelector } from 'src/store/hooks';
 import {
   getSelectedConnectedDevice,
   getSelectedKeyboardAPI,
 } from 'src/store/devicesSlice';
-import {getExpressions, saveMacros} from 'src/store/macrosSlice';
-import {useTranslation} from 'react-i18next';
+import { getExpressions, saveMacros } from 'src/store/macrosSlice';
+import { useTranslation } from 'react-i18next';
 
 type ViaSaveFile = {
   name: string;
@@ -31,6 +31,7 @@ type ViaSaveFile = {
   layers: string[][];
   macros?: string[];
   encoders?: [string, string][][];
+  layerNames?: Record<number, string>;
 };
 
 const isViaSaveFile = (obj: any): obj is ViaSaveFile =>
@@ -49,7 +50,7 @@ const Container = styled.div`
 `;
 
 export const Pane: FC = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const selectedDefinition = useAppSelector(getSelectedDefinition);
   const selectedDevice = useAppSelector(getSelectedConnectedDevice);
@@ -57,7 +58,8 @@ export const Pane: FC = () => {
   const rawLayers = useAppSelector(getSelectedRawLayers);
   const macros = useAppSelector((state) => state.macros);
   const expressions = useAppSelector(getExpressions);
-  const {basicKeyToByte, byteToKey} = useAppSelector(getBasicKeyToByte);
+  const { basicKeyToByte, byteToKey } = useAppSelector(getBasicKeyToByte);
+  const allLayerNames = useAppSelector((state) => state.settings.layerNames);
 
   // TODO: improve typing so we can remove this
   if (!selectedDefinition || !selectedDevice || !api) {
@@ -68,8 +70,8 @@ export const Pane: FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const getEncoderValues = async () => {
-    const {layouts} = selectedDefinition;
-    const {keys, optionKeys} = layouts;
+    const { layouts } = selectedDefinition;
+    const { keys, optionKeys } = layouts;
     const encoders = [
       ...keys,
       ...Object.values(optionKeys)
@@ -111,7 +113,7 @@ export const Pane: FC = () => {
   };
 
   const saveLayout = async () => {
-    const {name, vendorProductId} = selectedDefinition;
+    const { name, vendorProductId } = selectedDefinition;
     const suggestedName =
       name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '.layout.json';
     try {
@@ -124,17 +126,18 @@ export const Pane: FC = () => {
         vendorProductId,
         macros: [...expressions],
         layers: rawLayers.map(
-          (layer: {keymap: number[]}) =>
+          (layer: { keymap: number[] }) =>
             layer.keymap.map(
               (keyByte: number) =>
                 getCodeForByte(keyByte, basicKeyToByte, byteToKey) || '',
             ), // TODO: should empty string be empty keycode instead?
         ),
         encoders: encoderValues,
+        layerNames: allLayerNames && selectedDevice ? allLayerNames[selectedDevice.path] : undefined,
       };
 
       const content = stringify(saveFile);
-      const blob = new Blob([content], {type: 'application/json'});
+      const blob = new Blob([content], { type: 'application/json' });
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
@@ -173,7 +176,7 @@ export const Pane: FC = () => {
         setErrorMessage(
           t(
             'Could not import layout. This file was created for a different keyboard: {{name}}',
-            {name: saveFile.name},
+            { name: saveFile.name },
           ),
         );
         return;
@@ -241,6 +244,21 @@ export const Pane: FC = () => {
             ),
           ),
         );
+      }
+
+      if (saveFile.layerNames && selectedDevice) {
+        Object.entries(saveFile.layerNames).forEach(([layerIdx, name]) => {
+          dispatch(
+            {
+              type: 'settings/updateLayerName',
+              payload: {
+                devicePath: selectedDevice.path,
+                layer: parseInt(layerIdx),
+                name
+              }
+            }
+          );
+        });
       }
 
       setSuccessMessage(t('Successfully updated layout!'));

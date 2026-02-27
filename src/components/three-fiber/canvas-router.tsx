@@ -91,7 +91,7 @@ export const NonSuspenseCanvasRouter = () => {
   const theme = useAppSelector(getSelectedTheme);
   const accentColor = useMemo(() => theme[KeyColorType.Accent].c, [theme]);
   const showLoader =
-    path === '/' && (!selectedDefinition || loadProgress !== 1);
+    ['/', '/configure'].includes(path) && (!selectedDefinition || loadProgress !== 1);
   useGLTF(glbSrc, true, true);
   const versionDefinitions: DefinitionVersionMap[] = useMemo(
     () =>
@@ -102,7 +102,7 @@ export const NonSuspenseCanvasRouter = () => {
   );
   const hideDesignScene = '/design' === path && !versionDefinitions.length;
   const hideConfigureScene =
-    '/' === path &&
+    ['/', '/configure'].includes(path) &&
     (!selectedDefinition || (loadProgress + progress / 100) / 2 !== 1);
   const terrainOnClick = useCallback(() => {
     if (true) {
@@ -259,10 +259,10 @@ const getRouteX = (route: string) => {
     case '/test': {
       return testPosition;
     }
-    case '/openh11': {
+    case '/': {
       return openh11Position;
     }
-    case '/': {
+    case '/configure': {
       return configurePosition;
     }
     default: {
@@ -296,7 +296,7 @@ const Keyboards = React.memo((props: any) => {
   const testPosition = -getRouteX('/test');
   const designPosition = -getRouteX('/design');
   const debugPosition = -getRouteX('/debug');
-  const openh11Position = -getRouteX('/openh11');
+  const openh11Position = -getRouteX('/');
 
   return (
     <>

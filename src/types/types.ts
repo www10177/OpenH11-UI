@@ -5,7 +5,7 @@ import type {
   LightingValue,
   VIAMenu,
 } from '@the-via/reader';
-import {TestKeyboardSoundsMode} from 'src/components/void/test-keyboard-sounds';
+import { TestKeyboardSoundsMode } from 'src/components/void/test-keyboard-sounds';
 
 export enum TestKeyState {
   Initial,
@@ -18,7 +18,7 @@ export type HIDColor = {
   sat: number;
 };
 
-export type LightingData = Partial<{[key in LightingValue]: number[]}> & {
+export type LightingData = Partial<{ [key in LightingValue]: number[] }> & {
   customColors?: HIDColor[];
 };
 
@@ -41,7 +41,7 @@ export type Layer = {
   isLoaded: boolean;
 };
 
-export type DeviceLayerMap = {[devicePath: string]: Layer[]};
+export type DeviceLayerMap = { [devicePath: string]: Layer[] };
 
 export type WebVIADevice = Device & {
   _device: HIDDevice;
@@ -91,6 +91,7 @@ export type Settings = {
   macroEditor: MacroEditorSettings;
   testKeyboardSoundsSettings: TestKeyboardSoundsSettings;
   designDefinitionVersion: DefinitionVersion;
+  layerNames?: Record<string, Record<number, string>>;
 };
 
 export type CommonMenusMap = {
@@ -103,7 +104,7 @@ export type StoreData = {
   settings: Settings;
 };
 
-export type VendorProductIdMap = Record<number, {v2: boolean; v3: boolean}>;
+export type VendorProductIdMap = Record<number, { v2: boolean; v3: boolean }>;
 
 export type DefinitionIndex = Pick<
   KeyboardDefinitionIndex,

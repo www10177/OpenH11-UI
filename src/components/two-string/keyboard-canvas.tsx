@@ -1,5 +1,5 @@
-import React, {useMemo} from 'react';
-import {shallowEqual} from 'react-redux';
+import React, { useMemo } from 'react';
+import { shallowEqual } from 'react-redux';
 import {
   calculateKeyboardFrameDimensions,
   CSSVarObject,
@@ -9,14 +9,18 @@ import {
   KeyboardCanvasProps,
   KeyboardCanvasContentProps,
 } from 'src/types/keyboard-rendering';
-import {Case} from './case';
-import {KeyGroup} from './key-group';
-import {MatrixLines} from './matrix-lines';
+import { Case } from './case';
+import { KeyGroup } from './key-group';
+import { MatrixLines } from './matrix-lines';
+import { useAppSelector } from 'src/store/hooks';
+import { getSelectedLayerIndex } from 'src/store/keymapSlice';
+import { getLayerNames } from 'src/store/settingsSlice';
+import { getSelectedConnectedDevice } from 'src/store/devicesSlice';
 export const KeyboardCanvas: React.FC<KeyboardCanvasProps<React.MouseEvent>> = (
   props,
 ) => {
-  const {containerDimensions, shouldHide, ...otherProps} = props;
-  const {width, height} = useMemo(
+  const { containerDimensions, shouldHide, ...otherProps } = props;
+  const { width, height } = useMemo(
     () => calculateKeyboardFrameDimensions(otherProps.keys),
     [otherProps.keys],
   );
@@ -27,15 +31,15 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps<React.MouseEvent>> = (
       Math.min(
         1,
         containerDimensions &&
-          containerDimensions.width /
-            ((CSSVarObject.keyWidth + CSSVarObject.keyXSpacing) * width -
-              CSSVarObject.keyXSpacing +
-              minPadding * 2),
+        containerDimensions.width /
+        ((CSSVarObject.keyWidth + CSSVarObject.keyXSpacing) * width -
+          CSSVarObject.keyXSpacing +
+          minPadding * 2),
       ),
       containerHeight /
-        ((CSSVarObject.keyHeight + CSSVarObject.keyYSpacing) * height -
-          CSSVarObject.keyYSpacing +
-          minPadding * 2),
+      ((CSSVarObject.keyHeight + CSSVarObject.keyYSpacing) * height -
+        CSSVarObject.keyYSpacing +
+        minPadding * 2),
     ) || 1;
 
   return (
@@ -55,6 +59,39 @@ const KeyboardGroup = styled.div`
   position: relative;
 `;
 
+const LayerTextHUD = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  pointer-events: none;
+`;
+
+const LayerBadge = styled.span`
+  background: var(--color_accent);
+  color: var(--color_inside-accent);
+  font-size: 28px;
+  font-weight: 900;
+  padding: 4px 18px;
+  border-radius: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+`;
+
+const LayerName = styled.span`
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 12px var(--color_accent), 0 0 4px rgba(255,255,255,0.5);
+`;
+
 const KeyboardCanvasContent: React.FC<
   KeyboardCanvasContentProps<React.MouseEvent>
 > = React.memo((props) => {
@@ -69,6 +106,11 @@ const KeyboardCanvasContent: React.FC<
     width,
     height,
   } = props;
+
+  const selectedLayerIndex = useAppSelector(getSelectedLayerIndex);
+  const device = useAppSelector(getSelectedConnectedDevice);
+  const layerNames = useAppSelector(getLayerNames);
+  const customName = device ? layerNames[device.path]?.[selectedLayerIndex] : '';
 
   return (
     <KeyboardGroup>
@@ -91,6 +133,10 @@ const KeyboardCanvasContent: React.FC<
           height={height}
         />
       )}
+      <LayerTextHUD>
+        <LayerBadge>Layer {selectedLayerIndex}</LayerBadge>
+        {customName && <LayerName>{customName}</LayerName>}
+      </LayerTextHUD>
     </KeyboardGroup>
   );
 }, shallowEqual);

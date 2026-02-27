@@ -8,7 +8,7 @@ import { Badge } from './configure-panes/badge';
 import { clearSelectedKey, setConfigureKeyboardIsSelectable, setLayer, getLoadProgress } from 'src/store/keymapSlice';
 import { useAppDispatch, useAppSelector } from 'src/store/hooks';
 import { getSelectedDefinition } from 'src/store/definitionsSlice';
-import { Loader } from './configure';
+import { Loader, ConfigurePanels } from './configure';
 import { mapEvtToKeycode } from 'src/utils/key-event';
 import { getBasicKeyToByte, getSelectedKeyDefinitions } from 'src/store/definitionsSlice';
 import { getConnectedDevices, getSupportedIds } from 'src/store/devicesSlice';
@@ -124,15 +124,7 @@ export const OpenH11Pane: FC = () => {
         </div>
       </ConfigureFlexCell>
 
-      <Grid style={{ pointerEvents: 'none', marginTop: '550px' }}>
-        <SpanOverflowCell style={{ pointerEvents: 'all', gridColumn: 'span 3', background: 'var(--bg_menu)' }}>
-          <Container>
-            <Title>OpenH11 Custom Tools</Title>
-            <p>Welcome to the OpenH11 custom laboratory.</p>
-            <p>This space is ready for your custom functions.</p>
-          </Container>
-        </SpanOverflowCell>
-      </Grid>
+      <ConfigurePanels />
     </ConfigureBasePane>
   );
 };

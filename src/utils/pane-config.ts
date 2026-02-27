@@ -20,7 +20,7 @@ export default [
     component: ConfigurePane,
     icon: faKeyboard,
     title: 'Configure',
-    path: '/',
+    path: '/configure',
   },
   {
     key: 'test',
@@ -47,7 +47,7 @@ export default [
     key: 'openh11',
     component: OpenH11Pane,
     icon: faRocket,
-    path: '/openh11',
+    path: '/',
     title: 'OpenH11',
   },
   {
