@@ -5,7 +5,7 @@ import type {
 } from '../types/types';
 // This is a bit cray
 const globalBuffer: {
-  [path: string]: {currTime: number; message: Uint8Array}[];
+  [path: string]: { currTime: number; message: Uint8Array }[];
 } = {};
 const eventWaitBuffer: {
   [path: string]: ((a: Uint8Array) => void)[];
@@ -50,7 +50,7 @@ export const tryForgetDevice = (device: ConnectedDevice | AuthorizedDevice) => {
 };
 
 const ExtendedHID = {
-  _cache: {} as {[key: string]: WebVIADevice},
+  _cache: {} as { [key: string]: WebVIADevice },
   requestDevice: async () => {
     const requestedDevice = await navigator.hid.requestDevice({
       filters: [
@@ -125,13 +125,19 @@ const ExtendedHID = {
     setupListeners() {
       if (this._hidDevice) {
         this._hidDevice._device.addEventListener('inputreport', (e) => {
+          const rawBuffer = new Uint8Array(e.data.buffer);
+          if (rawBuffer[0] === 0xfe) {
+            window.dispatchEvent(new CustomEvent('via-layer-update', { detail: rawBuffer[1] }));
+            return;
+          }
           if (eventWaitBuffer[this.path].length !== 0) {
             // It should be impossible to have a handler in the buffer
             // that has a ts that happened after the current message
             // came in
             (eventWaitBuffer[this.path].shift() as any)(
-              new Uint8Array(e.data.buffer),
+              rawBuffer,
             );
+
           } else {
             globalBuffer[this.path].push({
               currTime: Date.now(),
@@ -171,6 +177,14 @@ const ExtendedHID = {
 
     async write(arr: number[]) {
       await this.openPromise;
+      if (this._hidDevice && !this._hidDevice._device.opened) {
+        try {
+          await this.open();
+        } catch (e) {
+          console.error('Failed to open device on write:', e);
+          throw e; // rethrow so caller sees it
+        }
+      }
       const data = new Uint8Array(arr.slice(1));
       await this._hidDevice?._device.sendReport(0, data);
     }

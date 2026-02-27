@@ -1,10 +1,10 @@
-import React, {useState, useEffect} from 'react';
-import {faPlus} from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useEffect } from 'react';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import styled from 'styled-components';
 import ChippyLoader from '../chippy-loader';
 import LoadingText from '../loading-text';
-import {CenterPane, ConfigureBasePane} from './pane';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import { CenterPane, ConfigureBasePane } from './pane';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   CustomFeaturesV2,
   getLightingDefinition,
@@ -13,35 +13,35 @@ import {
   VIADefinitionV2,
   VIADefinitionV3,
 } from '@the-via/reader';
-import {Grid, Row, IconContainer, MenuCell, ConfigureFlexCell} from './grid';
+import { Grid, Row, IconContainer, MenuCell, ConfigureFlexCell } from './grid';
 import * as Keycode from './configure-panes/keycode';
 import * as Lighting from './configure-panes/lighting';
 import * as Macros from './configure-panes/macros';
 import * as SaveLoad from './configure-panes/save-load';
 import * as Layouts from './configure-panes/layouts';
 import * as RotaryEncoder from './configure-panes/custom/satisfaction75';
-import {makeCustomMenus} from './configure-panes/custom/menu-generator';
-import {LayerControl} from './configure-panes/layer-control';
-import {Badge} from './configure-panes/badge';
-import {AccentButtonLarge} from '../inputs/accent-button';
-import {useAppSelector} from 'src/store/hooks';
-import {getSelectedDefinition} from 'src/store/definitionsSlice';
+import { makeCustomMenus } from './configure-panes/custom/menu-generator';
+import { LayerControl } from './configure-panes/layer-control';
+import { Badge } from './configure-panes/badge';
+import { AccentButtonLarge } from '../inputs/accent-button';
+import { useAppSelector } from 'src/store/hooks';
+import { getSelectedDefinition } from 'src/store/definitionsSlice';
 import {
   clearSelectedKey,
   getLoadProgress,
   getNumberOfLayers,
   setConfigureKeyboardIsSelectable,
 } from 'src/store/keymapSlice';
-import {useDispatch} from 'react-redux';
-import {reloadConnectedDevices} from 'src/store/devicesThunks';
-import {getV3MenuComponents} from 'src/store/menusSlice';
-import {getIsMacroFeatureSupported} from 'src/store/macrosSlice';
-import {getConnectedDevices, getSupportedIds} from 'src/store/devicesSlice';
-import {isElectron} from 'src/utils/running-context';
-import {useAppDispatch} from 'src/store/hooks';
-import {MenuTooltip} from '../inputs/tooltip';
-import {getRenderMode, getSelectedTheme} from 'src/store/settingsSlice';
-import {useTranslation} from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { reloadConnectedDevices } from 'src/store/devicesThunks';
+import { getV3MenuComponents } from 'src/store/menusSlice';
+import { getIsMacroFeatureSupported } from 'src/store/macrosSlice';
+import { getConnectedDevices, getSupportedIds } from 'src/store/devicesSlice';
+import { isElectron } from 'src/utils/running-context';
+import { useAppDispatch } from 'src/store/hooks';
+import { MenuTooltip } from '../inputs/tooltip';
+import { getRenderMode, getSelectedTheme } from 'src/store/settingsSlice';
+import { useTranslation } from 'react-i18next';
 
 const MenuContainer = styled.div`
   padding: 15px 10px 20px 10px;
@@ -96,7 +96,7 @@ const filterInferredRows = (
   numberOfLayers: number,
   rows: typeof Rows,
 ): typeof Rows => {
-  const {layouts} = selectedDefinition;
+  const { layouts } = selectedDefinition;
   let removeList: typeof Rows = [];
   // LAYOUTS IS INFERRED, filter out if doesn't exist
   if (
@@ -125,8 +125,8 @@ const getRowsForKeyboardV2 = (
 ): typeof Rows => {
   let rows: typeof Rows = [Keycode, Layouts, Macros, SaveLoad];
   if (isVIADefinitionV2(selectedDefinition)) {
-    const {lighting, customFeatures} = selectedDefinition;
-    const {supportedLightingValues} = getLightingDefinition(lighting);
+    const { lighting, customFeatures } = selectedDefinition;
+    const { supportedLightingValues } = getLightingDefinition(lighting);
     if (supportedLightingValues.length !== 0) {
       rows = [...rows, Lighting];
     }
@@ -142,12 +142,12 @@ const getRowsForKeyboardV2 = (
   );
 };
 
-const Loader: React.FC<{
+export const Loader: React.FC<{
   loadProgress: number;
   selectedDefinition: VIADefinitionV2 | VIADefinitionV3 | null;
 }> = (props) => {
-  const {t} = useTranslation();
-  const {loadProgress, selectedDefinition} = props;
+  const { t } = useTranslation();
+  const { loadProgress, selectedDefinition } = props;
   const dispatch = useAppDispatch();
   const theme = useAppSelector(getSelectedTheme);
 
@@ -172,7 +172,7 @@ const Loader: React.FC<{
       {(showButton || noConnectedDevices) && !noSupportedIds && !isElectron ? (
         <AccentButtonLarge onClick={() => dispatch(reloadConnectedDevices())}>
           {t('Authorize device')}
-          <FontAwesomeIcon style={{marginLeft: '10px'}} icon={faPlus} />
+          <FontAwesomeIcon style={{ marginLeft: '10px' }} icon={faPlus} />
         </AccentButtonLarge>
       ) : (
         <LoadingText isSearching={!selectedDefinition} />
@@ -181,7 +181,7 @@ const Loader: React.FC<{
   );
 };
 
-const LoaderPane = styled(CenterPane)`
+export const LoaderPane = styled(CenterPane)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,7 +215,7 @@ export const ConfigurePane = () => {
 };
 
 const ConfigureGrid = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   const [selectedRow, setRow] = useState(0);
@@ -246,16 +246,16 @@ const ConfigureGrid = () => {
           right: 0,
         }}
       >
-        <div style={{pointerEvents: 'all'}}>
+        <div style={{ pointerEvents: 'all' }}>
           <LayerControl />
           <Badge />
         </div>
       </ConfigureFlexCell>
-      <Grid style={{pointerEvents: 'none'}}>
-        <MenuCell style={{pointerEvents: 'all'}}>
+      <Grid style={{ pointerEvents: 'none' }}>
+        <MenuCell style={{ pointerEvents: 'all' }}>
           <MenuContainer>
             {(KeyboardRows || []).map(
-              ({Icon, Title}: {Icon: any; Title: string}, idx: number) => (
+              ({ Icon, Title }: { Icon: any; Title: string }, idx: number) => (
                 <Row
                   key={idx}
                   onClick={(_) => setRow(idx)}

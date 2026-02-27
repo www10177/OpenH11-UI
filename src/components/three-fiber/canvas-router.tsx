@@ -1,6 +1,6 @@
-import {faSpinner, faUnlock} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {a, config, useSpring} from '@react-spring/three';
+import { faSpinner, faUnlock } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { a, config, useSpring } from '@react-spring/three';
 import {
   Html,
   OrbitControls,
@@ -8,18 +8,18 @@ import {
   useGLTF,
   useProgress,
 } from '@react-three/drei';
-import {Canvas} from '@react-three/fiber';
-import {DefinitionVersionMap, KeyColorType} from '@the-via/reader';
+import { Canvas } from '@react-three/fiber';
+import { DefinitionVersionMap, KeyColorType } from '@the-via/reader';
 import cubeySrc from 'assets/models/cubey.glb';
 import glbSrc from 'assets/models/keyboard_components.glb';
-import React, {Suspense, useCallback, useEffect, useMemo, useRef} from 'react';
-import {shallowEqual} from 'react-redux';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { shallowEqual } from 'react-redux';
 import {
   getCustomDefinitions,
   getSelectedDefinition,
 } from 'src/store/definitionsSlice';
-import {reloadConnectedDevices} from 'src/store/devicesThunks';
-import {useAppDispatch, useAppSelector} from 'src/store/hooks';
+import { reloadConnectedDevices } from 'src/store/devicesThunks';
+import { useAppDispatch, useAppSelector } from 'src/store/hooks';
 import {
   getConfigureKeyboardIsSelectable,
   getLoadProgress,
@@ -29,17 +29,17 @@ import {
   getDesignDefinitionVersion,
   getSelectedTheme,
 } from 'src/store/settingsSlice';
-import {OVERRIDE_HID_CHECK} from 'src/utils/override';
-import {useSize} from 'src/utils/use-size';
-import {Object3D, SpotLight as ThreeSpotLight} from 'three';
-import {useLocation} from 'wouter';
-import {AccentButtonLarge} from '../inputs/accent-button';
-import {ConfigureKeyboard} from '../n-links/keyboard/configure';
-import {Design} from '../n-links/keyboard/design';
-import {Test} from '../n-links/keyboard/test';
-import {Camera} from './camera';
-import {LoaderCubey} from './loader-cubey';
-import {UpdateUVMaps} from './update-uv-maps';
+import { OVERRIDE_HID_CHECK } from 'src/utils/override';
+import { useSize } from 'src/utils/use-size';
+import { Object3D, SpotLight as ThreeSpotLight } from 'three';
+import { useLocation } from 'wouter';
+import { AccentButtonLarge } from '../inputs/accent-button';
+import { ConfigureKeyboard } from '../n-links/keyboard/configure';
+import { Design } from '../n-links/keyboard/design';
+import { Test } from '../n-links/keyboard/test';
+import { Camera } from './camera';
+import { LoaderCubey } from './loader-cubey';
+import { UpdateUVMaps } from './update-uv-maps';
 
 useGLTF.preload(cubeySrc, true, true);
 useGLTF.preload(glbSrc, true, true);
@@ -49,7 +49,7 @@ const KeyboardBG: React.FC<{
   onClick: () => void;
   visible: boolean;
 }> = React.memo((props) => {
-  const {onClick, visible, color} = props;
+  const { onClick, visible, color } = props;
   return (
     <mesh
       receiveShadow
@@ -74,7 +74,7 @@ export const CanvasRouter = () => {
 
 const LazyRouter = React.lazy(async () => {
   await document.fonts.load('bold 16px Fira Sans').finally();
-  return {default: NonSuspenseCanvasRouter};
+  return { default: NonSuspenseCanvasRouter };
 });
 
 export const NonSuspenseCanvasRouter = () => {
@@ -82,7 +82,7 @@ export const NonSuspenseCanvasRouter = () => {
   const body = useRef(document.body);
   const containerRef = useRef(null);
   const loadProgress = useAppSelector(getLoadProgress);
-  const {progress} = useProgress();
+  const { progress } = useProgress();
   const dispatch = useAppDispatch();
   const dimensions = useSize(body);
   const localDefinitions = Object.values(useAppSelector(getCustomDefinitions));
@@ -131,8 +131,8 @@ export const NonSuspenseCanvasRouter = () => {
             ? !hideTerrainBG
               ? 'translateY(-500px)'
               : !dimensions
-              ? ''
-              : `translateY(${-300 + dimensions!.height / 2}px)`
+                ? ''
+                : `translateY(${-300 + dimensions!.height / 2}px)`
             : '',
           position: hideCanvasScene && !hideTerrainBG ? 'absolute' : 'relative',
           overflow: 'visible',
@@ -141,7 +141,7 @@ export const NonSuspenseCanvasRouter = () => {
         }}
         ref={containerRef}
       >
-        <Canvas flat={true} shadows style={{overflow: 'visible'}}>
+        <Canvas flat={true} shadows style={{ overflow: 'visible' }}>
           <UpdateUVMaps />
           <Lights />
           <KeyboardBG
@@ -167,11 +167,11 @@ export const NonSuspenseCanvasRouter = () => {
               !selectedDefinition ? (
                 <AccentButtonLarge
                   onClick={() => dispatch(reloadConnectedDevices())}
-                  style={{width: 'max-content'}}
+                  style={{ width: 'max-content' }}
                 >
                   Authorize device
                   <FontAwesomeIcon
-                    style={{marginLeft: '10px'}}
+                    style={{ marginLeft: '10px' }}
                     icon={faUnlock}
                   />
                 </AccentButtonLarge>
@@ -247,7 +247,8 @@ const getRouteX = (route: string) => {
   const testPosition = -spaceMultiplier * 1;
   const designPosition = -spaceMultiplier * 2;
   const debugPosition = -spaceMultiplier * 3;
-  const otherPosition = -spaceMultiplier * 3;
+  const openh11Position = -spaceMultiplier * 4;
+  const otherPosition = -spaceMultiplier * 5;
   switch (route) {
     case '/debug': {
       return debugPosition;
@@ -257,6 +258,9 @@ const getRouteX = (route: string) => {
     }
     case '/test': {
       return testPosition;
+    }
+    case '/openh11': {
+      return openh11Position;
     }
     case '/': {
       return configurePosition;
@@ -268,7 +272,7 @@ const getRouteX = (route: string) => {
 };
 
 const KeyboardGroup = React.memo((props: any) => {
-  const {loadProgress, configureKeyboardIsSelectable} = props;
+  const { loadProgress, configureKeyboardIsSelectable } = props;
   const [path] = useLocation();
   const routeX = getRouteX(path);
   const slide = useSpring({
@@ -288,10 +292,11 @@ const KeyboardGroup = React.memo((props: any) => {
 }, shallowEqual);
 
 const Keyboards = React.memo((props: any) => {
-  const {loadProgress, dimensions, configureKeyboardIsSelectable} = props;
+  const { loadProgress, dimensions, configureKeyboardIsSelectable } = props;
   const testPosition = -getRouteX('/test');
   const designPosition = -getRouteX('/design');
   const debugPosition = -getRouteX('/debug');
+  const openh11Position = -getRouteX('/openh11');
 
   return (
     <>
@@ -309,6 +314,13 @@ const Keyboards = React.memo((props: any) => {
         <Design dimensions={dimensions} nDimension={'3D'} />
       </group>
       <group position-x={debugPosition}></group>
+      <group position-x={openh11Position} visible={loadProgress === 1}>
+        <ConfigureKeyboard
+          dimensions={dimensions}
+          selectable={configureKeyboardIsSelectable}
+          nDimension={'3D'}
+        />
+      </group>
     </>
   );
 }, shallowEqual);

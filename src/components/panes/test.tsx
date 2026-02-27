@@ -1,8 +1,8 @@
-import React, {FC, useContext} from 'react';
+import React, { FC, useContext } from 'react';
 import fullKeyboardDefinition from '../../utils/test-keyboard-definition.json';
-import {Pane} from './pane';
+import { Pane } from './pane';
 import styled from 'styled-components';
-import {PROTOCOL_GAMMA} from '../../utils/keyboard-api';
+import { PROTOCOL_GAMMA } from '../../utils/keyboard-api';
 import {
   ControlRow,
   Label,
@@ -13,11 +13,11 @@ import {
   Grid,
   SpanOverflowCell,
 } from './grid';
-import {AccentSlider} from '../inputs/accent-slider';
-import {AccentButton} from '../inputs/accent-button';
-import {useDispatch} from 'react-redux';
-import {useAppSelector} from 'src/store/hooks';
-import {getSelectedConnectedDevice} from 'src/store/devicesSlice';
+import { AccentSlider } from '../inputs/accent-slider';
+import { AccentButton } from '../inputs/accent-button';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from 'src/store/hooks';
+import { getSelectedConnectedDevice } from 'src/store/devicesSlice';
 import {
   getSelectedDefinition,
   getSelectedKeyDefinitions,
@@ -28,15 +28,15 @@ import {
   getTestKeyboardSoundsSettings,
   setTestKeyboardSoundsSettings,
 } from 'src/store/settingsSlice';
-import {MenuContainer} from './configure-panes/custom/menu-generator';
-import {MenuTooltip} from '../inputs/tooltip';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faCircleQuestion} from '@fortawesome/free-solid-svg-icons';
-import {useProgress} from '@react-three/drei';
-import {AccentSelect} from '../inputs/accent-select';
-import {AccentRange} from '../inputs/accent-range';
-import {TestKeyboardSoundsMode} from '../void/test-keyboard-sounds';
-import {useTranslation} from 'react-i18next';
+import { MenuContainer } from './configure-panes/custom/menu-generator';
+import { MenuTooltip } from '../inputs/tooltip';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import { useProgress } from '@react-three/drei';
+import { AccentSelect } from '../inputs/accent-select';
+import { AccentRange } from '../inputs/accent-range';
+import { TestKeyboardSoundsMode } from '../void/test-keyboard-sounds';
+import { useTranslation } from 'react-i18next';
 
 const Container = styled.div`
   display: flex;
@@ -53,12 +53,55 @@ const TestPane = styled(Pane)`
 `;
 
 export const TestContext = React.createContext([
-  {clearTestKeys: () => {}},
-  (...a: any[]) => {},
+  { clearTestKeys: () => { } },
+  (...a: any[]) => { },
 ] as const);
 
+const LayerIndicatorWrapper = styled.div`
+  background: var(--color_solid);
+  color: var(--color_accent);
+  border: 2px solid var(--color_accent);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px var(--color_accent);
+  transition: all 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ActiveLayerIndicator: FC = () => {
+  const [layer, setLayer] = React.useState<number | null>(null);
+  const [highlight, setHighlight] = React.useState(false);
+
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      setLayer((prev: number | null) => {
+        if (prev !== e.detail) {
+          setHighlight(true);
+          setTimeout(() => setHighlight(false), 150);
+        }
+        return e.detail;
+      });
+    };
+    window.addEventListener('via-layer-update', handler);
+    return () => window.removeEventListener('via-layer-update', handler);
+  }, []);
+
+  if (layer === null) return null;
+
+  return (
+    <LayerIndicatorWrapper style={{ transform: highlight ? 'scale(1.05)' : 'scale(1)' }}>
+      Current Layer: {layer}
+    </LayerIndicatorWrapper>
+  );
+};
+
 export const Test: FC = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const selectedDevice = useAppSelector(getSelectedConnectedDevice);
   const selectedDefinition = useAppSelector(getSelectedDefinition);
@@ -69,7 +112,7 @@ export const Test: FC = () => {
   );
 
   const [testContextObj] = useContext(TestContext);
-  const {progress} = useProgress();
+  const { progress } = useProgress();
 
   const hasTestMatrixDevice =
     selectedDevice && selectedDefinition && keyDefinitions;
@@ -127,7 +170,7 @@ export const Test: FC = () => {
   return progress !== 100 ? null : (
     <TestPane>
       <Grid>
-        <MenuCell style={{pointerEvents: 'all'}}>
+        <MenuCell style={{ pointerEvents: 'all' }}>
           <MenuContainer>
             <Row $selected={true}>
               <IconContainer>
@@ -139,6 +182,7 @@ export const Test: FC = () => {
         </MenuCell>
         <SpanOverflowCell>
           <Container>
+            <ActiveLayerIndicator />
             <ControlRow>
               <Label>{t('Reset Keyboard')}</Label>
               <Detail>

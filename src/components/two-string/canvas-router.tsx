@@ -1,12 +1,12 @@
-import {useProgress} from '@react-three/drei';
-import {DefinitionVersionMap, KeyColorType} from '@the-via/reader';
-import React, {useCallback, useEffect, useMemo, useRef} from 'react';
-import {shallowEqual} from 'react-redux';
+import { useProgress } from '@react-three/drei';
+import { DefinitionVersionMap, KeyColorType } from '@the-via/reader';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { shallowEqual } from 'react-redux';
 import {
   getCustomDefinitions,
   getSelectedDefinition,
 } from 'src/store/definitionsSlice';
-import {useAppDispatch, useAppSelector} from 'src/store/hooks';
+import { useAppDispatch, useAppSelector } from 'src/store/hooks';
 import {
   clearSelectedKey,
   getConfigureKeyboardIsSelectable,
@@ -17,14 +17,14 @@ import {
   getDesignDefinitionVersion,
   getSelectedTheme,
 } from 'src/store/settingsSlice';
-import {getDarkenedColor} from 'src/utils/color-math';
-import {OVERRIDE_HID_CHECK} from 'src/utils/override';
-import {useSize} from 'src/utils/use-size';
+import { getDarkenedColor } from 'src/utils/color-math';
+import { OVERRIDE_HID_CHECK } from 'src/utils/override';
+import { useSize } from 'src/utils/use-size';
 import styled from 'styled-components';
-import {useLocation} from 'wouter';
-import {ConfigureKeyboard} from '../n-links/keyboard/configure';
-import {Design} from '../n-links/keyboard/design';
-import {Test} from '../n-links/keyboard/test';
+import { useLocation } from 'wouter';
+import { ConfigureKeyboard } from '../n-links/keyboard/configure';
+import { Design } from '../n-links/keyboard/design';
+import { Test } from '../n-links/keyboard/test';
 
 const KeyboardBG = styled.div<{
   onClick: () => void;
@@ -62,7 +62,7 @@ export const CanvasRouter = () => {
   const body = useRef(document.body);
   const containerRef = useRef(null);
   const loadProgress = useAppSelector(getLoadProgress);
-  const {progress} = useProgress();
+  const { progress } = useProgress();
   const dispatch = useAppDispatch();
   const containerDimensions = useSize(containerRef);
   const dimensions = useSize(body);
@@ -111,8 +111,8 @@ export const CanvasRouter = () => {
             ? !hideTerrainBG
               ? 'translateY(-500px)'
               : !dimensions
-              ? ''
-              : `translateY(${-300 + dimensions!.height / 2}px)`
+                ? ''
+                : `translateY(${-300 + dimensions!.height / 2}px)`
             : '',
           position: hideCanvasScene && !hideTerrainBG ? 'absolute' : 'relative',
           overflow: 'visible',
@@ -150,7 +150,8 @@ const getRouteX = (route: string) => {
   const testPosition = -spaceMultiplier * 1;
   const designPosition = -spaceMultiplier * 2;
   const debugPosition = -spaceMultiplier * 3;
-  const otherPosition = -spaceMultiplier * 3;
+  const openh11Position = -spaceMultiplier * 4;
+  const otherPosition = -spaceMultiplier * 5;
   switch (route) {
     case '/debug': {
       return debugPosition;
@@ -160,6 +161,9 @@ const getRouteX = (route: string) => {
     }
     case '/test': {
       return testPosition;
+    }
+    case '/openh11': {
+      return openh11Position;
     }
     case '/': {
       return configurePosition;
@@ -182,7 +186,7 @@ const KeyboardGroupContainer = styled.div`
   left: 0;
 `;
 const KeyboardGroup = React.memo((props: any) => {
-  const {loadProgress, configureKeyboardIsSelectable, containerDimensions} =
+  const { loadProgress, configureKeyboardIsSelectable, containerDimensions } =
     props;
   const [path] = useLocation();
   const ref = useRef<HTMLDivElement>(null);
@@ -233,7 +237,7 @@ const KeyboardGroup = React.memo((props: any) => {
   );
 }, shallowEqual);
 const Keyboards = React.memo((props: any) => {
-  const {dimensions, configureKeyboardIsSelectable} = props;
+  const { dimensions, configureKeyboardIsSelectable } = props;
   return (
     <>
       <KeyboardRouteGroup $position={0}>
@@ -250,6 +254,13 @@ const Keyboards = React.memo((props: any) => {
         <Design dimensions={dimensions} nDimension={'2D'} />
       </KeyboardRouteGroup>
       <KeyboardRouteGroup $position={3}></KeyboardRouteGroup>
+      <KeyboardRouteGroup $position={4}>
+        <ConfigureKeyboard
+          dimensions={dimensions}
+          selectable={configureKeyboardIsSelectable}
+          nDimension={'2D'}
+        />
+      </KeyboardRouteGroup>
     </>
   );
 }, shallowEqual);

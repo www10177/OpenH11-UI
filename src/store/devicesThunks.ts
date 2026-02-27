@@ -1,24 +1,28 @@
 // This is conceptually an extension of devicesSlice, but has been separated to remove circular module dependencies between deviceSlice and other slices that import from it
 
+import { keyboardDefinitionV3ToVIADefinitionV3, isVIADefinitionV3 } from '@the-via/reader';
+
 import {
   getDefinitionsFromStore,
   getSupportedIdsFromStore,
   syncStore,
 } from '../utils/device-store';
-import {getRecognisedDevices, getVendorProductId} from '../utils/hid-keyboards';
-import {KeyboardAPI} from '../utils/keyboard-api';
-import type {AppThunk} from './index';
+import { getRecognisedDevices, getVendorProductId } from '../utils/hid-keyboards';
+import { KeyboardAPI } from '../utils/keyboard-api';
+import type { AppThunk } from './index';
 import {
   reloadDefinitions,
   loadLayoutOptions,
   updateDefinitions,
   getDefinitions,
   loadStoredCustomDefinitions,
+  loadCustomDefinitions,
+  storeCustomDefinitions,
 } from './definitionsSlice';
-import {loadKeymapFromDevice} from './keymapSlice';
-import {updateLightingData} from './lightingSlice';
-import {loadMacros} from './macrosSlice';
-import {updateV3MenuData} from './menusSlice';
+import { loadKeymapFromDevice } from './keymapSlice';
+import { updateLightingData } from './lightingSlice';
+import { loadMacros } from './macrosSlice';
+import { updateV3MenuData } from './menusSlice';
 import {
   clearAllDevices,
   getConnectedDevices,
@@ -36,82 +40,82 @@ import type {
   ConnectedDevices,
   WebVIADevice,
 } from 'src/types/types';
-import {createRetry} from 'src/utils/retry';
-import {extractDeviceInfo, logAppError} from './errorsSlice';
-import {tryForgetDevice} from 'src/shims/node-hid';
-import {isAuthorizedDeviceConnected} from 'src/utils/type-predicates';
-import {loadFirmwareVersion} from './firmwareSlice';
+import { createRetry } from 'src/utils/retry';
+import { extractDeviceInfo, logAppError } from './errorsSlice';
+import { tryForgetDevice } from 'src/shims/node-hid';
+import { isAuthorizedDeviceConnected } from 'src/utils/type-predicates';
+import { loadFirmwareVersion } from './firmwareSlice';
 
 const selectConnectedDeviceRetry = createRetry(8, 100);
 
 export const selectConnectedDeviceByPath =
   (path: string): AppThunk =>
-  async (dispatch, getState) => {
-    // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
-    await dispatch(reloadConnectedDevices());
-    const connectedDevice = getConnectedDevices(getState())[path];
-    if (connectedDevice) {
-      dispatch(selectConnectedDevice(connectedDevice));
-    }
-  };
+    async (dispatch, getState) => {
+      // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
+      await dispatch(reloadConnectedDevices());
+      const connectedDevice = getConnectedDevices(getState())[path];
+      if (connectedDevice) {
+        dispatch(selectConnectedDevice(connectedDevice));
+      }
+    };
 
 // TODO: should we change these other thunks to use the selected device state instead of params?
 // Maybe not? the nice this about this is we don't have to null check the device
 const selectConnectedDevice =
   (connectedDevice: ConnectedDevice): AppThunk =>
-  async (dispatch) => {
-    const deviceInfo = extractDeviceInfo(connectedDevice);
-    try {
-      dispatch(selectDevice(connectedDevice));
-      // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
-      await dispatch(loadMacros(connectedDevice));
-      await dispatch(loadLayoutOptions());
-
-      const {protocol} = connectedDevice;
+    async (dispatch) => {
+      const deviceInfo = extractDeviceInfo(connectedDevice);
       try {
-        if (protocol < 11) {
-          // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
-          await dispatch(updateLightingData(connectedDevice));
-        } else if (protocol >= 11) {
-          await dispatch(loadFirmwareVersion(connectedDevice));
-          // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
-          await dispatch(updateV3MenuData(connectedDevice));
-        }
-      } catch (e) {
-        dispatch(
-          logAppError({
-            message: 'Loading lighting/menu data failed',
-            deviceInfo,
-          }),
-        );
-      }
+        dispatch(selectDevice(connectedDevice));
+        // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
+        await dispatch(loadMacros(connectedDevice));
+        await dispatch(loadLayoutOptions());
 
-      // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
-      await dispatch(loadKeymapFromDevice(connectedDevice));
-      selectConnectedDeviceRetry.clear();
-    } catch (e) {
-      if (selectConnectedDeviceRetry.retriesLeft()) {
-        dispatch(
-          logAppError({
-            message: 'Loading device failed - retrying',
-            deviceInfo,
-          }),
-        );
-        selectConnectedDeviceRetry.retry(() => {
-          dispatch(selectConnectedDevice(connectedDevice));
-        });
-      } else {
-        dispatch(
-          logAppError({
-            message: 'All retries failed for attempting connection with device',
-            deviceInfo,
-          }),
-        );
-        console.log('Hard resetting device store:', e);
-        dispatch(clearAllDevices());
+        const { protocol } = connectedDevice;
+        try {
+          if (protocol < 11) {
+            // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
+            await dispatch(updateLightingData(connectedDevice));
+          } else if (protocol >= 11) {
+            await dispatch(loadFirmwareVersion(connectedDevice));
+            // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
+            await dispatch(updateV3MenuData(connectedDevice));
+          }
+        } catch (e) {
+          dispatch(
+            logAppError({
+              message: 'Loading lighting/menu data failed',
+              deviceInfo,
+            }),
+          );
+        }
+
+        // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
+        await dispatch(loadKeymapFromDevice(connectedDevice));
+        selectConnectedDeviceRetry.clear();
+      } catch (e) {
+        if (selectConnectedDeviceRetry.retriesLeft()) {
+          dispatch(
+            logAppError({
+              message: 'Loading device failed - retrying',
+              deviceInfo,
+            }),
+          );
+          selectConnectedDeviceRetry.retry(() => {
+            dispatch(selectConnectedDevice(connectedDevice));
+          });
+        } else {
+          dispatch(
+            logAppError({
+              message: 'All retries failed for attempting connection with device',
+              deviceInfo,
+            }),
+          );
+          console.log('Hard resetting device store:', e);
+          dispatch(clearAllDevices());
+        }
       }
-    }
-  };
+    };
 
 // This scans for potentially compatible devices, filter out the ones that have the correct protocol
 // and then optionally will select the first one if the current selection is non-existent
@@ -156,7 +160,7 @@ export const reloadConnectedDevices =
     const authorizedDevices: AuthorizedDevice[] = recognisedDevices
       .filter((_, i) => protocolVersions[i] !== -1)
       .map((device, idx) => {
-        const {path, productId, vendorId, productName} = device;
+        const { path, productId, vendorId, productName } = device;
         const protocol = protocolVersions[idx];
         return {
           path,
@@ -216,7 +220,37 @@ export const reloadConnectedDevices =
 
 export const loadSupportedIds = (): AppThunk => async (dispatch) => {
   await syncStore();
-  dispatch(updateSupportedIds(getSupportedIdsFromStore()));
+  const supportedIds = getSupportedIdsFromStore();
+
+  // === OpenH11 Native Injection ===
+  // Pre-load the OpenH11 definition so it's recognized natively at boot.
+  // This prevents the tryForgetDevice race condition that occurs when
+  // the vendorProductId is in supportedIds but the definition fetch fails.
+  try {
+    const resp = await fetch('/OpenH11Via.json');
+    if (resp.ok) {
+      const def = await resp.json();
+      const parsedDef = isVIADefinitionV3(def) ? def : keyboardDefinitionV3ToVIADefinitionV3(def);
+      const vpid = parsedDef.vendorProductId;
+
+      // 1. Inject into supportedIds so getRecognisedDevices finds the device
+      supportedIds[vpid] = { v2: false, v3: true };
+
+      // 2. Pre-load the definition into the store so reloadDefinitions
+      //    sees it already resolved → isAuthorizedDeviceConnected = true
+      dispatch(updateDefinitions({ [String(vpid)]: { v3: parsedDef } } as any));
+
+      // 3. Also store as custom definition (persists to IndexedDB)
+      dispatch(loadCustomDefinitions({ definitions: [parsedDef], version: 'v3' }));
+      await dispatch(storeCustomDefinitions({ definitions: [parsedDef], version: 'v3' }));
+
+      console.info('[OpenH11] Definition injected at boot:', { vpid, name: def.name });
+    }
+  } catch (e) {
+    console.warn('[OpenH11] Failed to pre-load definition:', e);
+  }
+
+  dispatch(updateSupportedIds(supportedIds));
   // John you drongo, don't trust the compiler, dispatches are totes awaitable for async thunks
   await dispatch(updateDefinitions(getDefinitionsFromStore()));
   dispatch(loadStoredCustomDefinitions());

@@ -1,8 +1,8 @@
-import type {Device, Keymap} from '../types/types';
-import type {LightingValue, MatrixInfo} from '@the-via/reader';
-import {logCommand} from './command-logger';
-import {initAndConnectDevice} from './usb-hid';
-import {store} from 'src/store/index';
+import type { Device, Keymap } from '../types/types';
+import type { LightingValue, MatrixInfo } from '@the-via/reader';
+import { logCommand } from './command-logger';
+import { initAndConnectDevice } from './usb-hid';
+import { store } from 'src/store/index';
 import {
   extractDeviceInfo,
   getErrorTimestamp,
@@ -47,7 +47,7 @@ enum APICommand {
 }
 
 const APICommandValueToName = Object.entries(APICommand).reduce(
-  (acc: any, [key, value]) => ({...acc, [value]: key}),
+  (acc: any, [key, value]) => ({ ...acc, [value]: key }),
   {} as Record<APICommand, string>,
 );
 
@@ -88,7 +88,7 @@ export const PROTOCOL_ALPHA = 7;
 export const PROTOCOL_BETA = 8;
 export const PROTOCOL_GAMMA = 9;
 
-const cache: {[addr: string]: {hid: any}} = {};
+const cache: { [addr: string]: { hid: any } } = {};
 
 const eqArr = <T>(arr1: T[], arr2: T[]) => {
   if (arr1.length !== arr2.length) {
@@ -130,7 +130,7 @@ type CommandQueueEntry = {
 type CommandQueue = Array<CommandQueueEntry>;
 
 const globalCommandQueue: {
-  [kbAddr: string]: {isFlushing: boolean; commandQueue: CommandQueue};
+  [kbAddr: string]: { isFlushing: boolean; commandQueue: CommandQueue };
 } = {};
 
 export const canConnect = (device: Device) => {
@@ -145,12 +145,26 @@ export const canConnect = (device: Device) => {
 
 export class KeyboardAPI {
   kbAddr: HIDAddress;
+  intervalId?: any;
 
   constructor(path: string) {
     this.kbAddr = path;
     if (!cache[path]) {
-      const device = initAndConnectDevice({path});
-      cache[path] = {hid: device};
+      const device = initAndConnectDevice({ path });
+      cache[path] = { hid: device };
+    }
+    this.intervalId = setInterval(() => this.pollLayer(), 50);
+  }
+
+  async pollLayer() {
+    if (this.commandQueueWrapper.isFlushing || this.commandQueueWrapper.commandQueue.length > 0) return;
+    try {
+      const paddedArray = new Array(33).fill(0);
+      paddedArray[0] = 0x00; // Report ID
+      paddedArray[1] = 0xfe; // Custom Command for Layer
+      await this.getHID().write(paddedArray);
+    } catch (e) {
+      // ignore
     }
   }
 
@@ -158,8 +172,10 @@ export class KeyboardAPI {
     this.kbAddr = kbAddr;
     cache[kbAddr] = {
       ...cache[kbAddr],
-      hid: initAndConnectDevice({path: kbAddr}),
+      hid: initAndConnectDevice({ path: kbAddr }),
     };
+    if (this.intervalId) clearInterval(this.intervalId);
+    this.intervalId = setInterval(() => this.pollLayer(), 50);
   }
 
   async getByteBuffer(): Promise<Uint8Array> {
@@ -220,7 +236,7 @@ export class KeyboardAPI {
   }
 
   async fastReadRawMatrix(
-    {rows, cols}: MatrixInfo,
+    { rows, cols }: MatrixInfo,
     layer: number,
   ): Promise<number[]> {
     const length = rows * cols;
@@ -228,37 +244,37 @@ export class KeyboardAPI {
     const bufferList = new Array<number>(
       Math.ceil(length / MAX_KEYCODES_PARTIAL),
     ).fill(0);
-    const {res: promiseRes} = bufferList.reduce(
-      ({res, remaining}: {res: Promise<number[]>[]; remaining: number}) =>
+    const { res: promiseRes } = bufferList.reduce(
+      ({ res, remaining }: { res: Promise<number[]>[]; remaining: number }) =>
         remaining < MAX_KEYCODES_PARTIAL
           ? {
-              res: [
-                ...res,
-                this.getKeymapBuffer(
-                  layer * length * 2 + 2 * (length - remaining),
-                  remaining * 2,
-                ),
-              ],
-              remaining: 0,
-            }
+            res: [
+              ...res,
+              this.getKeymapBuffer(
+                layer * length * 2 + 2 * (length - remaining),
+                remaining * 2,
+              ),
+            ],
+            remaining: 0,
+          }
           : {
-              res: [
-                ...res,
-                this.getKeymapBuffer(
-                  layer * length * 2 + 2 * (length - remaining),
-                  MAX_KEYCODES_PARTIAL * 2,
-                ),
-              ],
-              remaining: remaining - MAX_KEYCODES_PARTIAL,
-            },
-      {res: [], remaining: length},
+            res: [
+              ...res,
+              this.getKeymapBuffer(
+                layer * length * 2 + 2 * (length - remaining),
+                MAX_KEYCODES_PARTIAL * 2,
+              ),
+            ],
+            remaining: remaining - MAX_KEYCODES_PARTIAL,
+          },
+      { res: [], remaining: length },
     );
     const yieldedRes = await Promise.all(promiseRes);
     return yieldedRes.flatMap(shiftBufferTo16Bit);
   }
 
   async slowReadRawMatrix(
-    {rows, cols}: MatrixInfo,
+    { rows, cols }: MatrixInfo,
     layer: number,
   ): Promise<number[]> {
     const length = rows * cols;
@@ -282,7 +298,7 @@ export class KeyboardAPI {
   }
 
   async slowWriteRawMatrix(
-    {cols}: MatrixInfo,
+    { cols }: MatrixInfo,
     keymap: number[][],
   ): Promise<void> {
     keymap.forEach(async (layer, layerIdx) =>
@@ -424,7 +440,7 @@ export class KeyboardAPI {
       APICommand.BACKLIGHT_CONFIG_GET_VALUE,
       bytes,
     );
-    return {hue, sat};
+    return { hue, sat };
   }
 
   async setColor(colorNumber: number, hue: number, sat: number) {
@@ -442,7 +458,7 @@ export class KeyboardAPI {
       APICommand.BACKLIGHT_CONFIG_GET_VALUE,
       bytes,
     );
-    return {hue, sat};
+    return { hue, sat };
   }
 
   async setCustomColor(colorNumber: number, hue: number, sat: number) {
@@ -566,7 +582,7 @@ export class KeyboardAPI {
 
   get commandQueueWrapper() {
     if (!globalCommandQueue[this.kbAddr]) {
-      globalCommandQueue[this.kbAddr] = {isFlushing: false, commandQueue: []};
+      globalCommandQueue[this.kbAddr] = { isFlushing: false, commandQueue: [] };
       return globalCommandQueue[this.kbAddr];
     }
     return globalCommandQueue[this.kbAddr];
@@ -613,7 +629,7 @@ export class KeyboardAPI {
     }
     this.commandQueueWrapper.isFlushing = true;
     while (this.commandQueueWrapper.commandQueue.length !== 0) {
-      const {res, rej, args} =
+      const { res, rej, args } =
         this.commandQueueWrapper.commandQueue.shift() as CommandQueueEntry;
       // This allows us to queue promises in between hid commands, useful for timeouts
       if (typeof args === 'function') {
