@@ -227,7 +227,7 @@ export const loadSupportedIds = (): AppThunk => async (dispatch) => {
   // This prevents the tryForgetDevice race condition that occurs when
   // the vendorProductId is in supportedIds but the definition fetch fails.
   try {
-    const resp = await fetch('/OpenH11Via.json');
+    const resp = await fetch('/OpenH11Via.json?v=' + Date.now());
     if (resp.ok) {
       const def = await resp.json();
       const parsedDef = isVIADefinitionV3(def) ? def : keyboardDefinitionV3ToVIADefinitionV3(def);

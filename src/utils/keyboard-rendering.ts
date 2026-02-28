@@ -7,8 +7,8 @@ import {
   VIAKey,
 } from '@the-via/reader';
 import partition from 'lodash.partition';
-import {Color} from 'three';
-import {getThemeFromStore} from './device-store';
+import { Color } from 'three';
+import { getThemeFromStore } from './device-store';
 import {
   getLabelForByte,
   getShortNameForKeycode,
@@ -50,14 +50,14 @@ export const getComboKeyProps = (
 ): {
   clipPath: null | string;
   normalizedRects:
-    | null
-    | [[number, number, number, number], [number, number, number, number]];
+  | null
+  | [[number, number, number, number], [number, number, number, number]];
 } => {
   if (k.w2 === undefined || k.h2 === undefined) {
-    return {clipPath: null, normalizedRects: null};
+    return { clipPath: null, normalizedRects: null };
   }
 
-  const {x, y, x2 = 0, y2 = 0, w, w2, h, h2} = k;
+  const { x, y, x2 = 0, y2 = 0, w, w2, h, h2 } = k;
   const boundingBoxWidth = Math.max(k.w, k.w2);
   const boundingBoxHeight = Math.max(k.h, k.h2);
   const minX = Math.min(x, x + x2);
@@ -194,7 +194,7 @@ const getTraversalOrder = (arr: VIAKey[]): VIAKey[] => {
     return [...chain.sort(sortByX), ...getTraversalOrder(rest)];
   }
 };
-const widthProfiles: {[a: number]: number[]} = {
+const widthProfiles: { [a: number]: number[] } = {
   1: [1, 2, 3, 4],
   1.25: [4],
   1.5: [2, 4],
@@ -256,19 +256,19 @@ export const getKeyId = (k: VIAKey) => {
 export const getKeyboardRowPartitions = (
   keys: VIAKey[],
 ): {
-  rowMap: {[id: string]: number};
+  rowMap: { [id: string]: number };
   partitionedKeys: VIAKey[][];
 } => {
-  const {partitionedKeys} = getTraversalOrder(keys).reduce(
-    ({prevX, partitionedKeys}, k) => {
+  const { partitionedKeys } = getTraversalOrder(keys).reduce(
+    ({ prevX, partitionedKeys }, k) => {
       const [x] = calculatePointPosition(k);
       if (prevX >= x) {
         partitionedKeys.push([]);
       }
       partitionedKeys[partitionedKeys.length - 1].push(k);
-      return {partitionedKeys, prevX: x};
+      return { partitionedKeys, prevX: x };
     },
-    {partitionedKeys: [] as VIAKey[][], prevX: Infinity},
+    { partitionedKeys: [] as VIAKey[][], prevX: Infinity },
   );
   const rowProfiles = getRowProfiles(partitionedKeys);
   return {
@@ -291,7 +291,8 @@ export const getNextKey = (
 ): number | null => {
   const displayedKeys = keys.filter((k) => !k.d);
   const currKey = keys[currIndex];
-  const sortedKeys = getTraversalOrder([...displayedKeys]);
+  // Use logical order defined in JSON, instead of spatial ordering logic
+  const sortedKeys = [...displayedKeys];
   const sortedIndex = sortedKeys.indexOf(currKey);
   return sortedIndex === sortedKeys.length - 1
     ? null
@@ -302,7 +303,7 @@ export const makeSRGBTheme = (theme: ThemeDefinition) =>
   Object.entries(theme).reduce((p, [key, colorPair]) => {
     const c = `#${new Color(colorPair.c).convertSRGBToLinear().getHexString()}`;
     const t = `#${new Color(colorPair.t).convertSRGBToLinear().getHexString()}`;
-    return {...p, [key]: {c, t}};
+    return { ...p, [key]: { c, t } };
   }, {}) as ReturnType<typeof getThemeFromStore>;
 
 export const calculateKeyboardFrameDimensions = (keys: Partial<Result>[]) => {
@@ -466,7 +467,7 @@ export const getLabel = (
     isCustomKeycodeByte(keycodeByte, basicKeyToByte) &&
     selectedDefinition?.customKeycodes &&
     selectedDefinition.customKeycodes[
-      getCustomKeycodeIndex(keycodeByte, basicKeyToByte)
+    getCustomKeycodeIndex(keycodeByte, basicKeyToByte)
     ] !== undefined
   ) {
     const customKeycodeIdx = getCustomKeycodeIndex(keycodeByte, basicKeyToByte);
