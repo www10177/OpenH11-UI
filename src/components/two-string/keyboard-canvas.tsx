@@ -110,7 +110,8 @@ const KeyboardCanvasContent: React.FC<
   const selectedLayerIndex = useAppSelector(getSelectedLayerIndex);
   const device = useAppSelector(getSelectedConnectedDevice);
   const layerNames = useAppSelector(getLayerNames);
-  const customName = device ? layerNames[device.path]?.[selectedLayerIndex] : '';
+  const vpidStr = device && typeof device !== 'string' ? device.vendorProductId.toString() : undefined;
+  const customName = vpidStr ? layerNames[vpidStr]?.[selectedLayerIndex] : '';
 
   return (
     <KeyboardGroup>

@@ -61,6 +61,16 @@ const LayerNameInput = styled.input`
   }
 `;
 
+// Default layer names — edit these to change what shows up on first connect
+const DEFAULT_LAYER_NAMES: Record<number, string> = {
+  0: 'Djmax',
+  1: 'Djmax Setup',
+  2: 'Rift Dancer',
+  3: 'Diva',
+  4: 'RhythmDoctor',
+  5: 'MuseDash',
+};
+
 export const LayerControl: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -70,7 +80,25 @@ export const LayerControl: React.FC<{ children?: React.ReactNode }> = ({ childre
   // Custom layer names state
   const device = useAppSelector(getSelectedConnectedDevice);
   const layerNames = useAppSelector(getLayerNames);
-  const currentLayerName = device ? layerNames[device.path]?.[selectedLayerIndex] || '' : '';
+
+  const vpidStr = device && typeof device !== 'string' ? device.vendorProductId.toString() : undefined;
+
+  // Auto-populate default layer names for new device paths
+  React.useEffect(() => {
+    if (vpidStr && !layerNames[vpidStr]) {
+      Object.entries(DEFAULT_LAYER_NAMES).forEach(([layer, name]) => {
+        dispatch(updateLayerName({
+          vendorProductId: parseInt(vpidStr),
+          layer: parseInt(layer),
+          name,
+        }));
+      });
+    }
+  }, [vpidStr]);
+
+  const currentLayerName = vpidStr
+    ? layerNames[vpidStr]?.[selectedLayerIndex] || DEFAULT_LAYER_NAMES[selectedLayerIndex] || ''
+    : '';
 
   const [editingName, setEditingName] = React.useState(currentLayerName);
 
@@ -79,9 +107,9 @@ export const LayerControl: React.FC<{ children?: React.ReactNode }> = ({ childre
   }, [currentLayerName, selectedLayerIndex]);
 
   const handleNameSave = () => {
-    if (device) {
+    if (device && typeof device !== 'string') {
       dispatch(updateLayerName({
-        devicePath: device.path,
+        vendorProductId: device.vendorProductId,
         layer: selectedLayerIndex,
         name: editingName
       }));

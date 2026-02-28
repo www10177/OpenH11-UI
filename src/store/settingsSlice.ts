@@ -112,16 +112,17 @@ const settingsSlice = createSlice({
     updateLayerName: (
       state,
       action: PayloadAction<{
-        devicePath: string;
+        vendorProductId: number;
         layer: number;
         name: string;
       }>,
     ) => {
       if (!state.layerNames) state.layerNames = {};
-      if (!state.layerNames[action.payload.devicePath]) {
-        state.layerNames[action.payload.devicePath] = {};
+      const vpidStr = action.payload.vendorProductId.toString();
+      if (!state.layerNames[vpidStr]) {
+        state.layerNames[vpidStr] = {};
       }
-      state.layerNames[action.payload.devicePath][action.payload.layer] = action.payload.name;
+      state.layerNames[vpidStr][action.payload.layer] = action.payload.name;
       setSettings(state);
     },
   },

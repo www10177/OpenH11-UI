@@ -114,13 +114,13 @@ export const Pane: FC = () => {
 
   const saveLayout = async () => {
     const { name, vendorProductId } = selectedDefinition;
-    const suggestedName =
-      name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '.layout.json';
+    const suggestedName = 'h11mod.json';
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName,
       });
       const encoderValues = await getEncoderValues();
+      const vpidStr = selectedDevice && typeof selectedDevice !== 'string' ? selectedDevice.vendorProductId.toString() : undefined;
       const saveFile: ViaSaveFile = {
         name,
         vendorProductId,
@@ -133,7 +133,7 @@ export const Pane: FC = () => {
             ), // TODO: should empty string be empty keycode instead?
         ),
         encoders: encoderValues,
-        layerNames: allLayerNames && selectedDevice ? allLayerNames[selectedDevice.path] : undefined,
+        layerNames: allLayerNames && vpidStr ? allLayerNames[vpidStr] : undefined,
       };
 
       const content = stringify(saveFile);
@@ -246,13 +246,13 @@ export const Pane: FC = () => {
         );
       }
 
-      if (saveFile.layerNames && selectedDevice) {
+      if (saveFile.layerNames && selectedDevice && typeof selectedDevice !== 'string') {
         Object.entries(saveFile.layerNames).forEach(([layerIdx, name]) => {
           dispatch(
             {
               type: 'settings/updateLayerName',
               payload: {
-                devicePath: selectedDevice.path,
+                vendorProductId: selectedDevice.vendorProductId,
                 layer: parseInt(layerIdx),
                 name
               }
