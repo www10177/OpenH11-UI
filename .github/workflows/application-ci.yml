@@ -17,6 +17,9 @@ jobs:
           persist-credentials: false
           submodules: true
       - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Verify runner placement
         shell: bash
         run: |
@@ -25,6 +28,6 @@ jobs:
           test -z "${KOMODO_API_KEY:-}${KOMODO_API_SECRET:-}${REGISTRY_TOKEN:-}"
       - name: Build frontend
         run: |
-          bun install --frozen-lockfile
-          bun run refresh-kbs
+          git config --global url."https://github.com/".insteadOf ssh://git@github.com/
+          npm ci --no-audit --no-fund
           bun run build
